@@ -247,15 +247,28 @@ function parseSOAPResponse(xmlString: string): any {
   if (adjustmentsTableMatch) {
     debugAdjustmentsSection = adjustmentsTableMatch[0].substring(0, 3000)
 
-    // Parse adjustments from AdjustmentsTable
+    // Parse AdjustmentItem elements from AdjustmentsTable
+    // Structure: <Adjustment lLpTemplateId="..."><AdjustmentItem Rate="0.000%" Point="0.500%" Description="..." /></Adjustment>
     const tableContent = adjustmentsTableMatch[1]
-    const tableAdjRegex = /<Adjustment\s+([^>]+)\/?>/gi
-    let tableAdjMatch
-    while ((tableAdjMatch = tableAdjRegex.exec(tableContent)) !== null) {
-      const adjAttrs = tableAdjMatch[1]
-      const desc = getAttr(adjAttrs, 'sAdjDescription') || getAttr(adjAttrs, 'Description')
-      const priceAdj = parseFloat(getAttr(adjAttrs, 'dAdjPriceAdj')) || parseFloat(getAttr(adjAttrs, 'PriceAdj')) || parseFloat(getAttr(adjAttrs, 'Amount')) || 0
-      const rateAdj = parseFloat(getAttr(adjAttrs, 'dAdjRateAdj')) || parseFloat(getAttr(adjAttrs, 'RateAdj')) || 0
+    const adjItemRegex = /<AdjustmentItem\s+([^>]+)\/?>/gi
+    let adjItemMatch
+    while ((adjItemMatch = adjItemRegex.exec(tableContent)) !== null) {
+      const adjAttrs = adjItemMatch[1]
+      const desc = getAttr(adjAttrs, 'Description')
+      const isHidden = getAttr(adjAttrs, 'IsHidden') === 'True'
+
+      // Skip hidden adjustments (like Price Group)
+      if (isHidden) continue
+
+      // Point is the price adjustment as a percentage string (e.g., "0.500%", "-0.250%")
+      // Negate it to get the price impact (positive point = negative price impact)
+      const pointStr = getAttr(adjAttrs, 'Point') || '0'
+      const pointVal = parseFloat(pointStr.replace('%', '')) || 0
+      const priceAdj = -pointVal  // Negate: Point of 0.5% means -0.5 price adjustment
+
+      // Rate adjustment
+      const rateStr = getAttr(adjAttrs, 'Rate') || '0'
+      const rateAdj = parseFloat(rateStr.replace('%', '')) || 0
 
       if (desc) {
         globalAdjustments.push({
