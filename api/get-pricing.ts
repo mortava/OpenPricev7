@@ -175,11 +175,12 @@ function buildLOXmlFormat(formData: any): string {
     <field id="sLAmtCalcPe">${loanAmount}</field>
     <field id="sTotalRenovationCosts">0</field>
     <field id="sProdImpound">${formData.impoundType === 'escrowed'}</field>
+    <field id="sImpoundTPe">${formData.impoundType === 'escrowed' ? 2 : 0}</field>
     <field id="sProdRLckdDays">${lockDays}</field>
     <field id="sCreditScoreEstimatePe">${formData.creditScore || 740}</field>
     <field id="aBTotalScoreIsFthbQP">${formData.isFTHB || false}</field>
     <field id="sIncomeDocumentationType">${mapIncomeDocType(isDSCR ? 'dscr' : docType)}</field>
-    ${isDSCR ? `<field id="aDSCR %">${formData.dscrValue ? Number(formData.dscrValue).toFixed(3) : mapDSCRRatio(formData.dscrRatio)}</field>` : ''}
+    ${isDSCR ? `<field id="aDSCR %">${mapDSCRRatio(formData.dscrRatio)}</field>` : ''}
     ${isDSCR ? `<field id="aOccupancyRate">${formData.occupancyRate || 100}</field>` : ''}
     <field id="sProdFilterPrepayNone">true</field>
     <field id="sProdFilterPrepayHasPPP">${includePPP}</field>
@@ -557,6 +558,10 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       : 0
     const ltvRatio = (loanAmount / (Number(formData.propertyValue) || 500000)) * 100
 
+    // Debug: capture what was sent to MeridianLink
+    const dscrCodeSent = isDSCRRequest ? mapDSCRRatio(formData.dscrRatio) : null
+    const impoundCodeSent = formData.impoundType === 'escrowed' ? 2 : 0
+
     return res.json({
       success: true,
       data: {
@@ -571,6 +576,16 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         programs: eligiblePrograms,
         totalPrograms: eligiblePrograms.length,
         source: 'meridianlink',
+        debugSentValues: {
+          dscrRatio: formData.dscrRatio || null,
+          dscrCode: dscrCodeSent,
+          dscrValue: formData.dscrValue || null,
+          impoundType: formData.impoundType,
+          impoundCode: impoundCodeSent,
+          loanPurpose: formData.loanPurpose,
+          occupancyType: formData.occupancyType,
+          documentationType: formData.documentationType,
+        },
         globalAdjustments: result.globalAdjustments
           ? result.globalAdjustments.filter((adj: any) => {
               const desc = (adj.description || '').toUpperCase()
