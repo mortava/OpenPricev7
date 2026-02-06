@@ -216,25 +216,33 @@ function parseSOAPResponse(xmlString: string): any {
   const programs: any[] = []
   let debugXmlSample = ''
 
-  // Look for Adjustments at the top level (outside of RateOptions)
+  // Look for Adjustments section (MeridianLink returns these in a separate block)
+  // The format could be <Adjustments><Adjustment .../></Adjustments> or <PricingAdjustments>
   const globalAdjustments: any[] = []
-  const globalAdjRegex = /<Adjustment\s([^>]*)\/?>/gi
-  let globalAdjMatch
-  const tempXml = level2
-  let rawAdjustmentSamples: string[] = []
-  while ((globalAdjMatch = globalAdjRegex.exec(tempXml)) !== null) {
-    const adjAttrs = globalAdjMatch[1]
-    // Capture first 3 raw adjustment attributes for debugging
-    if (rawAdjustmentSamples.length < 3) {
-      rawAdjustmentSamples.push(adjAttrs.substring(0, 300))
+
+  // Try to find Adjustments block
+  const adjustmentsBlockRegex = /<Adjustments[^>]*>([\s\S]*?)<\/Adjustments>/gi
+  const pricingAdjRegex = /<PricingAdjustment[^>]*>([\s\S]*?)<\/PricingAdjustment>/gi
+
+  // Look for <Adjustment> elements with proper attributes
+  const adjItemRegex = /<Adjustment\s+([^>]+)\/?>|<PricingAdjustment\s+([^>]+)\/?>/gi
+  let adjMatch
+  while ((adjMatch = adjItemRegex.exec(level2)) !== null) {
+    const adjAttrs = adjMatch[1] || adjMatch[2] || ''
+    // Skip if this is just a template reference
+    if (adjAttrs.includes('lLpTemplateId') && !adjAttrs.includes('Description') && !adjAttrs.includes('sAdjDescription')) {
+      continue
     }
     globalAdjustments.push({
-      description: getAttr(adjAttrs, 'Description') || getAttr(adjAttrs, 'Name') || getAttr(adjAttrs, 'Desc') || getAttr(adjAttrs, 'sAdjDescription'),
-      amount: parseFloat(getAttr(adjAttrs, 'Amount')) || parseFloat(getAttr(adjAttrs, 'Price')) || parseFloat(getAttr(adjAttrs, 'PriceAdj')) || parseFloat(getAttr(adjAttrs, 'dAdjPriceAdj')) || 0,
-      rateAdj: parseFloat(getAttr(adjAttrs, 'RateAdj')) || parseFloat(getAttr(adjAttrs, 'Rate')) || parseFloat(getAttr(adjAttrs, 'dAdjRateAdj')) || 0,
-      rawAttrs: adjAttrs.substring(0, 200), // Include raw for debugging
+      description: getAttr(adjAttrs, 'sAdjDescription') || getAttr(adjAttrs, 'Description') || getAttr(adjAttrs, 'Name'),
+      amount: parseFloat(getAttr(adjAttrs, 'dAdjPriceAdj')) || parseFloat(getAttr(adjAttrs, 'Amount')) || parseFloat(getAttr(adjAttrs, 'Price')) || 0,
+      rateAdj: parseFloat(getAttr(adjAttrs, 'dAdjRateAdj')) || parseFloat(getAttr(adjAttrs, 'RateAdj')) || 0,
     })
   }
+
+  // Also capture a larger XML sample to see the full structure
+  const adjustmentsSectionMatch = level2.match(/<Adjustments[\s\S]{0,2000}/i)
+  const debugAdjustmentsSection = adjustmentsSectionMatch ? adjustmentsSectionMatch[0] : 'No Adjustments section found'
 
   const programRegex = /<Program\s([^>]+)>([\s\S]*?)<\/Program>/gi
   let programMatch
@@ -348,6 +356,7 @@ function parseSOAPResponse(xmlString: string): any {
     totalPrograms: programs.length,
     globalAdjustments: globalAdjustments.length > 0 ? globalAdjustments : undefined,
     debugXmlSample,
+    debugAdjustmentsSection,
   }
 }
 
@@ -468,6 +477,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         source: 'meridianlink',
         globalAdjustments: result.globalAdjustments,
         debugXmlSample: result.debugXmlSample,
+        debugAdjustmentsSection: result.debugAdjustmentsSection,
       },
     })
   } catch (error) {
