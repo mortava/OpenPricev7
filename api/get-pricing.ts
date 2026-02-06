@@ -221,12 +221,18 @@ function parseSOAPResponse(xmlString: string): any {
   const globalAdjRegex = /<Adjustment\s([^>]*)\/?>/gi
   let globalAdjMatch
   const tempXml = level2
+  let rawAdjustmentSamples: string[] = []
   while ((globalAdjMatch = globalAdjRegex.exec(tempXml)) !== null) {
     const adjAttrs = globalAdjMatch[1]
+    // Capture first 3 raw adjustment attributes for debugging
+    if (rawAdjustmentSamples.length < 3) {
+      rawAdjustmentSamples.push(adjAttrs.substring(0, 300))
+    }
     globalAdjustments.push({
-      description: getAttr(adjAttrs, 'Description') || getAttr(adjAttrs, 'Name') || getAttr(adjAttrs, 'Desc'),
-      amount: parseFloat(getAttr(adjAttrs, 'Amount')) || parseFloat(getAttr(adjAttrs, 'Price')) || parseFloat(getAttr(adjAttrs, 'PriceAdj')) || 0,
-      rateAdj: parseFloat(getAttr(adjAttrs, 'RateAdj')) || parseFloat(getAttr(adjAttrs, 'Rate')) || 0,
+      description: getAttr(adjAttrs, 'Description') || getAttr(adjAttrs, 'Name') || getAttr(adjAttrs, 'Desc') || getAttr(adjAttrs, 'sAdjDescription'),
+      amount: parseFloat(getAttr(adjAttrs, 'Amount')) || parseFloat(getAttr(adjAttrs, 'Price')) || parseFloat(getAttr(adjAttrs, 'PriceAdj')) || parseFloat(getAttr(adjAttrs, 'dAdjPriceAdj')) || 0,
+      rateAdj: parseFloat(getAttr(adjAttrs, 'RateAdj')) || parseFloat(getAttr(adjAttrs, 'Rate')) || parseFloat(getAttr(adjAttrs, 'dAdjRateAdj')) || 0,
+      rawAttrs: adjAttrs.substring(0, 200), // Include raw for debugging
     })
   }
 
