@@ -321,6 +321,12 @@ export default function App() {
   }, [formData.propertyZip])
 
   const handleInputChange = (field: keyof LoanData, value: string | boolean) => {
+    // Clear stale pricing results when any form field changes after pricing
+    if (result) {
+      setResult(null)
+      setExpandedProgram(null)
+    }
+
     setFormData(prev => {
       const updated = { ...prev, [field]: value }
 
@@ -443,9 +449,9 @@ export default function App() {
           creditScore: Number(formData.creditScore),
           dti: Number(formData.dti),
           ltv: parseFloat(formData.ltv) || 0,
-          presentHousingExpense: Number(formData.presentHousingExpense.replace(/,/g, '')),
-          grossRent: Number(formData.grossRent.replace(/,/g, '')),
-          dscrRatio: calculatedDSCR.range // Use calculated range for API
+          presentHousingExpense: formData.documentationType === 'dscr' ? Number(formData.presentHousingExpense.replace(/,/g, '')) : undefined,
+          grossRent: formData.documentationType === 'dscr' ? Number(formData.grossRent.replace(/,/g, '')) : undefined,
+          dscrRatio: formData.documentationType === 'dscr' ? calculatedDSCR.range : undefined
         })
       })
       const data = await response.json()
