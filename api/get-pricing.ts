@@ -515,6 +515,30 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       })
     }
 
+    // Filter out DSCR programs and adjustments when doc type is NOT DSCR
+    if (!isDSCRRequest) {
+      const hasDSCR = (text: string): boolean => {
+        if (!text) return false
+        return text.toUpperCase().includes('DSCR')
+      }
+
+      eligiblePrograms = eligiblePrograms.filter((p: any) => {
+        // Skip entire programs with DSCR in the name
+        if (hasDSCR(p.programName) || hasDSCR(p.name)) return false
+        // Filter out rate options with DSCR in description
+        if (p.rateOptions) {
+          p.rateOptions = p.rateOptions.filter((ro: any) => !hasDSCR(ro.description))
+          // Strip DSCR adjustments from remaining rate options
+          p.rateOptions.forEach((ro: any) => {
+            if (ro.adjustments) {
+              ro.adjustments = ro.adjustments.filter((adj: any) => !hasDSCR(adj.description))
+            }
+          })
+        }
+        return p.rateOptions && p.rateOptions.length > 0
+      })
+    }
+
     if (eligiblePrograms.length === 0) {
       return res.json({
         success: false,
