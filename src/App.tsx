@@ -391,8 +391,18 @@ export default function App() {
     const loanAmt = Number(formData.loanAmount.replace(/,/g, ''))
     const propVal = Number(formData.propertyValue.replace(/,/g, ''))
     if (formData.loanAmount && loanAmt < 50000) errors.loanAmount = 'Minimum loan amount is $50,000'
-    if (formData.propertyValue && propVal < 50000) errors.propertyValue = 'Minimum property value is $50,000'
+    if (formData.loanAmount && loanAmt > 5000000) errors.loanAmount = 'Maximum loan amount is $5,000,000'
+    if (formData.propertyValue && propVal < 125000) errors.propertyValue = 'Minimum property value is $125,000'
+    if (formData.propertyValue && propVal > 100000000) errors.propertyValue = 'Maximum property value is $100,000,000'
     if (formData.loanAmount && formData.propertyValue && loanAmt > propVal) errors.loanAmount = 'Loan amount cannot exceed property value'
+
+    // LTV max 90%
+    if (formData.loanAmount && formData.propertyValue && loanAmt > 0 && propVal > 0) {
+      const ltv = (loanAmt / propVal) * 100
+      if (ltv > 90) {
+        errors.loanAmount = `Maximum LTV is 90%. Current LTV: ${ltv.toFixed(1)}%`
+      }
+    }
 
     // CRITICAL: Cash-Out Refinance LTV Validation - Max 85% LTV
     if (formData.loanPurpose === 'cashout' && loanAmt > 0 && propVal > 0) {
@@ -408,9 +418,9 @@ export default function App() {
     }
 
     const creditScore = Number(formData.creditScore)
-    if (formData.creditScore && (creditScore < 300 || creditScore > 850)) errors.creditScore = 'Credit score must be 300-850'
+    if (formData.creditScore && (creditScore < 620 || creditScore > 999)) errors.creditScore = 'Credit score must be 620-999'
     const dti = Number(formData.dti)
-    if (formData.dti && (dti < 1 || dti > 65)) errors.dti = 'DTI must be 1-65%'
+    if (formData.dti && (dti < 1 || dti > 55)) errors.dti = 'DTI must be 1-55%'
     if (formData.propertyZip && formData.propertyZip.length !== 5) errors.propertyZip = 'ZIP must be 5 digits'
     setValidationErrors(errors)
     return Object.keys(errors).length === 0

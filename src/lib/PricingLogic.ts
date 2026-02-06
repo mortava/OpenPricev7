@@ -566,17 +566,18 @@ export const validateScenario = (scenario: LoanScenario): ValidationResult => {
   const warnings: string[] = []
 
   // Required field checks
-  if (scenario.loanAmount <= 0) errors.push('Loan amount must be greater than 0')
-  if (scenario.propertyValue <= 0) errors.push('Property value must be greater than 0')
-  if (scenario.creditScore < 300 || scenario.creditScore > 850) errors.push('Credit score must be between 300 and 850')
-  if (scenario.dti < 0 || scenario.dti > 100) errors.push('DTI must be between 0 and 100')
+  if (scenario.loanAmount < 50000) errors.push('Loan amount must be at least $50,000')
+  if (scenario.loanAmount > 5000000) errors.push('Loan amount exceeds maximum ($5M)')
+  if (scenario.propertyValue < 125000) errors.push('Property value must be at least $125,000')
+  if (scenario.propertyValue > 100000000) errors.push('Property value exceeds maximum ($100M)')
+  if (scenario.creditScore < 620 || scenario.creditScore > 999) errors.push('Credit score must be 620-999')
+  if (scenario.dti < 1 || scenario.dti > 55) errors.push('DTI must be 1-55%')
 
   // LTV checks
-  if (scenario.ltv > 100) errors.push('LTV cannot exceed 100%')
-  if (scenario.ltv > 95) warnings.push('High LTV may limit program availability')
+  if (scenario.ltv > 90) errors.push('LTV cannot exceed 90%')
+  if (scenario.ltv > 80) warnings.push('High LTV may limit program availability')
 
   // Credit score warnings
-  if (scenario.creditScore < 620) warnings.push('Credit score below 620 may limit options')
   if (scenario.creditScore < 680) warnings.push('Better rates available with 680+ credit score')
 
   // DTI warnings
@@ -612,13 +613,13 @@ export const validateFormBeforeSubmit = (formData: Record<string, any>): Validat
 
   // === Required numeric validations ===
   if (loanAmount < 50000) errors.push('Loan amount must be at least $50,000')
-  if (loanAmount > 10000000) errors.push('Loan amount exceeds maximum ($10M)')
-  if (propertyValue < 50000) errors.push('Property value must be at least $50,000')
-  if (propertyValue > 50000000) errors.push('Property value exceeds maximum ($50M)')
+  if (loanAmount > 5000000) errors.push('Loan amount exceeds maximum ($5M)')
+  if (propertyValue < 125000) errors.push('Property value must be at least $125,000')
+  if (propertyValue > 100000000) errors.push('Property value exceeds maximum ($100M)')
   if (loanAmount > propertyValue) errors.push('Loan amount cannot exceed property value')
-  if (creditScore < 300 || creditScore > 850) errors.push('Credit score must be 300-850')
-  if (dti < 1 || dti > 65) errors.push('DTI must be 1-65%')
-  if (ltv <= 0 || ltv > 100) errors.push('LTV must be between 0% and 100%')
+  if (creditScore < 620 || creditScore > 999) errors.push('Credit score must be 620-999')
+  if (dti < 1 || dti > 55) errors.push('DTI must be 1-55%')
+  if (ltv <= 0 || ltv > 90) errors.push('LTV must be between 0% and 90%')
 
   // === Required string fields ===
   if (!formData.propertyZip || String(formData.propertyZip).length !== 5) {
