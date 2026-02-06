@@ -1159,39 +1159,7 @@ export default function App() {
                           />
                           <span className="text-sm">Cross-Collateralized</span>
                         </label>
-                        {/* Prepayment Penalty Section - Greyed out with both options selected */}
-                        <div className="flex items-center gap-4 opacity-60">
-                          <span className="text-sm font-medium text-gray-500">Prepayment Penalty:</span>
-                          <label className="flex items-center gap-1.5 cursor-not-allowed">
-                            <input
-                              type="checkbox"
-                              checked={true}
-                              disabled={true}
-                              className="w-4 h-4 rounded border-gray-300 text-gray-400 cursor-not-allowed"
-                            />
-                            <span className="text-sm text-gray-500">None</span>
-                          </label>
-                          <label className="flex items-center gap-1.5 cursor-not-allowed">
-                            <input
-                              type="checkbox"
-                              checked={true}
-                              disabled={true}
-                              className="w-4 h-4 rounded border-gray-300 text-gray-400 cursor-not-allowed"
-                            />
-                            <span className="text-sm text-gray-500">Has PPP</span>
-                          </label>
-                          {/* Occupancy Rate - Greyed out, default 100 */}
-                          <div className="flex items-center gap-1.5 ml-4">
-                            <span className="text-sm text-gray-500">Occupancy Rate:</span>
-                            <input
-                              type="text"
-                              value="100"
-                              disabled={true}
-                              className="w-14 px-2 py-1 text-sm border border-gray-300 rounded bg-gray-100 text-gray-500 cursor-not-allowed"
-                            />
-                            <span className="text-sm text-gray-500">%</span>
-                          </div>
-                        </div>
+                        {/* Prepayment Penalty (None + Has PPP) and Occupancy Rate (100%) are always sent to API but hidden from UI since they cannot be changed */}
                       </div>
                     </div>
                   )}
