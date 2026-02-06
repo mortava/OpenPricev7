@@ -701,7 +701,7 @@ export default function App() {
                         {hasError('loanAmount') && <p className="text-xs text-red-600">{validationErrors.loanAmount}</p>}
                       </div>
                       <div className="space-y-2">
-                        <Label className="flex items-center gap-1">
+                        <Label htmlFor="firstLienLTV" className="flex items-center gap-1">
                           1st Lien
                           <span className="relative group">
                             <Info className="w-3.5 h-3.5 text-blue-500 cursor-help" />
@@ -711,13 +711,13 @@ export default function App() {
                             </span>
                           </span>
                         </Label>
-                        <div className="h-10 px-3 py-2 bg-gray-100 border rounded-md text-sm font-medium">
+                        <div id="firstLienLTV" className="h-10 px-3 py-2 bg-gray-100 border rounded-md text-sm font-medium">
                           {calculatedLTV}%
                         </div>
                       </div>
                       <div className="space-y-2">
-                        <Label>CLTV</Label>
-                        <div className="h-10 px-3 py-2 bg-gray-100 border rounded-md text-sm font-medium">
+                        <Label htmlFor="cltv">CLTV</Label>
+                        <div id="cltv" className="h-10 px-3 py-2 bg-gray-100 border rounded-md text-sm font-medium">
                           {formData.lienPosition === '1st' ? `${calculatedLTV}%` : 'Enter 2nd Lien'}
                         </div>
                       </div>
@@ -740,8 +740,8 @@ export default function App() {
                     {/* LINE 3: Product, Payment, Impound Type + Cashout if applicable */}
                     <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-4">
                       <div className="space-y-2">
-                        <Label>Product</Label>
-                        <div className="h-10 px-3 py-2 bg-gray-100 border rounded-md text-sm font-medium">
+                        <Label htmlFor="product">Product</Label>
+                        <div id="product" className="h-10 px-3 py-2 bg-gray-100 border rounded-md text-sm font-medium">
                           Conventional
                         </div>
                       </div>
@@ -786,7 +786,7 @@ export default function App() {
                     {/* LINE 1: Location fields */}
                     <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                       <div className="space-y-2">
-                        <Label className={hasError('propertyZip') ? 'text-red-600' : ''}>
+                        <Label htmlFor="propertyZip" className={hasError('propertyZip') ? 'text-red-600' : ''}>
                           ZIP Code * {zipLoading && <Loader2 className="w-3 h-3 inline animate-spin ml-1" />}
                         </Label>
                         <Input
