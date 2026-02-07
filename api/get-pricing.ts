@@ -295,10 +295,9 @@ function parseSOAPResponse(xmlString: string): any {
         if (isHidden) continue
 
         // Point is the price adjustment as a percentage string (e.g., "0.500%", "-0.250%")
-        // Negate it to get the price impact (positive point = negative price impact)
+        // Pass through as-is from the API - do NOT negate
         const pointStr = getAttr(adjAttrs, 'Point') || '0'
-        const pointVal = parseFloat(pointStr.replace('%', '')) || 0
-        const priceAdj = -pointVal  // Negate: Point of 0.5% means -0.5 price adjustment
+        const priceAdj = parseFloat(pointStr.replace('%', '')) || 0
 
         // Rate adjustment
         const rateStr = getAttr(adjAttrs, 'Rate') || '0'
@@ -499,8 +498,13 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
     const result = parseSOAPResponse(resultXml)
 
-    // Filter eligible programs - strictly use API status
-    let eligiblePrograms = result.programs.filter((p: any) => p.status === 'Eligible')
+    // Filter programs: include Eligible OR programs with Available rate options
+    let eligiblePrograms = result.programs.filter((p: any) => {
+      if (p.status === 'Eligible') return true
+      // Also include programs that have rate options marked Available
+      if (p.rateOptions && p.rateOptions.some((ro: any) => ro.status === 'Available')) return true
+      return false
+    })
 
     // For Primary/Secondary: filter out PPP programs (PPP is Investment only)
     // BUT allow "0MO PPP" / "0 YR PPP" which means NO prepayment penalty
