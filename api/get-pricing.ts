@@ -161,8 +161,10 @@ function buildLOXmlFormat(formData: any): string {
   const isInvestment = formData.occupancyType === 'investment'
   const includePPP = isInvestment // Only include PPP programs for Investment
 
+  const isEscrowWaived = formData.impoundType === 'noescrow'
+
   return `<LOXmlFormat version="1.0">
-  <loan>
+  <loan sProdImpound="${isEscrowWaived ? 'false' : 'true'}" sWillEscrowBeWaived="${isEscrowWaived}">
     <field id="sSpZip">${escapeXml(formData.propertyZip || '')}</field>
     <field id="sSpStatePe">${escapeXml(formData.propertyState || 'CA')}</field>
     <field id="sSpCounty">${escapeXml(formData.propertyCounty || '')}</field>
@@ -175,8 +177,6 @@ function buildLOXmlFormat(formData: any): string {
     <field id="sDownPmtPcPe">${downPaymentPct.toFixed(2)}</field>
     <field id="sLAmtCalcPe">${loanAmount}</field>
     <field id="sTotalRenovationCosts">0</field>
-    <field id="sProdImpound">${formData.impoundType === 'noescrow' ? 0 : 1}</field>
-    <field id="sWillEscrowBeWaived">${formData.impoundType === 'noescrow'}</field>
     <field id="sProdRLckdDays">${lockDays}</field>
     <field id="sCreditScoreEstimatePe">${formData.creditScore || 740}</field>
     <field id="aBTotalScoreIsFthbQP">${formData.isFTHB || false}</field>
