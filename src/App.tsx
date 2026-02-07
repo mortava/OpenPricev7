@@ -1066,6 +1066,7 @@ export default function App() {
                             </SelectContent>
                           </Select>
                         </div>
+                        {formData.documentationType === 'dscr' && (
                         <div className="space-y-2">
                           <Label htmlFor="dscrEntityType">DSCR Entity Type</Label>
                           <Select name="dscrEntityType" value={formData.dscrEntityType} onValueChange={(v) => handleInputChange('dscrEntityType', v)}>
@@ -1078,8 +1079,10 @@ export default function App() {
                             </SelectContent>
                           </Select>
                         </div>
+                        )}
                       </div>
-                      {/* DSCR Calculation Fields */}
+                      {/* DSCR Calculation Fields - Only show when Income Doc Type = DSCR */}
+                      {formData.documentationType === 'dscr' && (
                       <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-4">
                         <div className="space-y-2">
                           <Label htmlFor="presentHousingExpense">Present Housing Expense</Label>
@@ -1132,6 +1135,7 @@ export default function App() {
                           </div>
                         </div>
                       </div>
+                      )}
                       {/* LINE 3: Investor checkboxes */}
                       <div className="flex flex-wrap gap-6 mt-4">
                         <label htmlFor="isSeasonalProperty" className="flex items-center gap-2 cursor-pointer">
