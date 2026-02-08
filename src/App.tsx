@@ -751,9 +751,12 @@ export default function App() {
       <header className="bg-white border-b border-gray-200 relative">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between h-16">
-            <div className="flex items-center gap-2">
-              <span className="text-xl font-bold text-gray-900 tracking-tight">OpenBroker</span>
-              <span className="bg-gray-900 text-white text-xs font-bold px-1.5 py-0.5 rounded">AI</span>
+            <div className="flex flex-col">
+              <div className="flex items-center gap-2">
+                <span className="text-xl font-bold text-gray-900 tracking-tight">OpenBroker</span>
+                <span className="bg-gray-900 text-white text-xs font-bold px-1.5 py-0.5 rounded">AI</span>
+              </div>
+              <span className="text-[10px] text-gray-400 leading-tight">MyPrice Investor: DEFY TPO</span>
             </div>
             {/* Desktop nav */}
             <nav className="hidden md:flex items-center gap-6">
