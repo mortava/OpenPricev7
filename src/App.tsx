@@ -751,17 +751,13 @@ export default function App() {
       <header className="bg-white border-b border-gray-200 relative">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between h-16">
-            <div className="flex flex-col">
-              <div className="flex items-center gap-2">
-                <span className="text-xl font-bold text-gray-900 tracking-tight">OpenBroker</span>
-                <span className="bg-gray-900 text-white text-xs font-bold px-1.5 py-0.5 rounded">AI</span>
-              </div>
-              <span className="text-[10px] text-gray-400 leading-tight">MyPrice Investor: DEFY TPO</span>
+            <div className="flex items-center gap-2">
+              <span className="text-xl font-bold text-gray-900 tracking-tight">OpenBroker</span>
+              <span className="bg-gray-900 text-white text-xs font-bold px-1.5 py-0.5 rounded">AI</span>
             </div>
             {/* Desktop nav */}
             <nav className="hidden md:flex items-center gap-6">
               <a href="https://app.defywholesale.com" target="_blank" rel="noopener noreferrer" className="text-sm font-medium text-gray-600 hover:text-gray-900">AI Deal Desk</a>
-              <a href="https://app.defywholesale.com" target="_blank" rel="noopener noreferrer" className="text-sm font-medium text-gray-600 hover:text-gray-900">Pipeline</a>
               <a href="https://app.defywholesale.com" target="_blank" rel="noopener noreferrer" className="text-sm font-medium text-gray-600 hover:text-gray-900">AVM</a>
               <a href="https://app.defywholesale.com" target="_blank" rel="noopener noreferrer" className="text-sm font-medium text-gray-600 hover:text-gray-900">AUS</a>
               <a href="mailto:torlando@defycapgroup.com,service@defytpo.com?subject=Lock%20Desk%20Request" className="inline-flex items-center gap-1.5 text-sm font-medium text-primary hover:text-primary/80">
@@ -785,7 +781,6 @@ export default function App() {
           <div className="md:hidden border-t border-gray-200 bg-white shadow-lg absolute left-0 right-0 z-50">
             <div className="px-4 py-3 space-y-2">
               <a href="https://app.defywholesale.com" target="_blank" rel="noopener noreferrer" className="block px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 rounded-md" onClick={() => setMobileMenuOpen(false)}>AI Deal Desk</a>
-              <a href="https://app.defywholesale.com" target="_blank" rel="noopener noreferrer" className="block px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 rounded-md" onClick={() => setMobileMenuOpen(false)}>Pipeline</a>
               <a href="https://app.defywholesale.com" target="_blank" rel="noopener noreferrer" className="block px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 rounded-md" onClick={() => setMobileMenuOpen(false)}>AVM</a>
               <a href="https://app.defywholesale.com" target="_blank" rel="noopener noreferrer" className="block px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 rounded-md" onClick={() => setMobileMenuOpen(false)}>AUS</a>
               <a href="mailto:torlando@defycapgroup.com,service@defytpo.com?subject=Lock%20Desk%20Request" className="flex items-center gap-1.5 px-3 py-2 text-sm font-medium text-primary hover:bg-blue-50 rounded-md" onClick={() => setMobileMenuOpen(false)}>
@@ -804,9 +799,12 @@ export default function App() {
           <div>
             <Card>
               <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Calculator className="w-5 h-5 text-primary" />Loan Details
-                </CardTitle>
+                <div className="flex items-center justify-between">
+                  <CardTitle className="flex items-center gap-2">
+                    <Calculator className="w-5 h-5 text-primary" />Loan Details
+                  </CardTitle>
+                  <span className="text-sm text-gray-500">Investor: DEFY <span className="text-cyan-500 font-medium">TPO</span></span>
+                </div>
               </CardHeader>
               <CardContent>
                 <form onSubmit={handleSubmit} className="space-y-6">
@@ -1687,14 +1685,10 @@ export default function App() {
       </main>
 
       <footer className="border-t border-gray-200 bg-white mt-12">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-1.5">
-              <span className="text-sm font-bold text-gray-900 tracking-tight">OpenBroker</span>
-              <span className="bg-gray-900 text-white text-[10px] font-bold px-1 py-0.5 rounded leading-none">AI</span>
-            </div>
-            <p className="hidden sm:block text-sm text-gray-500">© {new Date().getFullYear()} OpenBroker AI. All rights reserved.</p>
-          </div>
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
+          <p className="text-[9px] leading-tight text-slate-400 text-center">
+            OpenBroker AI and its products and platforms (Qualr, TraceAOS, and BCC) are B2B technology solutions, not mortgage lenders, brokers, or loan originators. We do not make credit decisions or offer, arrange, negotiate, or fund loans. Nothing on this platform is an offer, approval, or commitment to lend. All terms and approvals are determined by the licensed financial institution and the borrower. Beta v2.26.
+          </p>
         </div>
       </footer>
     </div>
