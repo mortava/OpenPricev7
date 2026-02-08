@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { Calculator, DollarSign, Loader2, CheckCircle2, AlertCircle, Info, ChevronDown, ChevronUp, Menu, X, ExternalLink } from 'lucide-react'
+import { Calculator, DollarSign, Loader2, CheckCircle2, AlertCircle, Info, ChevronDown, ChevronUp, Menu, X, ExternalLink, Mail, Download } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -15,6 +15,7 @@ interface LoanData {
   lockPeriod: string
   loanType: string
   loanPurpose: string
+  salesPrice: string
   cashoutAmount: string
   loanAmount: string
   propertyValue: string
@@ -222,6 +223,7 @@ const DEFAULT_FORM_DATA: LoanData = {
   lockPeriod: '30',
   loanType: 'nonqm',
   loanPurpose: 'purchase',
+  salesPrice: '800,000',
   cashoutAmount: '',
   loanAmount: '600,000',
   propertyValue: '800,000',
@@ -367,6 +369,24 @@ export default function App() {
         }
       }
 
+      // Bidirectional Sales Price <-> Appraised Value mirroring (Purchase only)
+      if (field === 'salesPrice' && updated.loanPurpose === 'purchase') {
+        updated.propertyValue = value as string
+        // Also recalculate loan amount based on new property value
+        const propVal = Number((value as string).replace(/,/g, '')) || 0
+        const ltvVal = parseFloat(prev.ltv) || 0
+        if (propVal > 0 && ltvVal > 0) {
+          updated.loanAmount = Math.round(propVal * (ltvVal / 100)).toLocaleString()
+        }
+      }
+      if (field === 'propertyValue' && updated.loanPurpose === 'purchase') {
+        updated.salesPrice = value as string
+      }
+      // When switching TO purchase, sync salesPrice from propertyValue
+      if (field === 'loanPurpose' && value === 'purchase') {
+        updated.salesPrice = prev.propertyValue
+      }
+
       // Auto-sync documentationType when loanType changes to DSCR
       if (field === 'loanType' && value === 'dscr') {
         updated.documentationType = 'dscr'
@@ -502,6 +522,103 @@ export default function App() {
       setError(err instanceof Error ? err.message : 'Failed to get pricing')
     }
     finally { setIsLoading(false) }
+  }
+
+  const showSalesPriceField = formData.loanPurpose === 'purchase'
+
+  const handleSharePDF = () => {
+    if (!result || !result.programs?.length) return
+    const programs = result.programs || []
+    const now = new Date()
+    const dateStr = now.toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })
+    const timeStr = now.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })
+
+    // Build adjustment rows for each program
+    const buildAdjRows = (adjs: Adjustment[]) => adjs.map(a =>
+      `<tr><td style="padding:4px 8px;border-bottom:1px solid #e5e7eb;font-size:11px;">${a.description}</td>` +
+      `<td style="padding:4px 8px;border-bottom:1px solid #e5e7eb;font-size:11px;text-align:right;color:${a.amount >= 0 ? '#16a34a' : '#dc2626'};font-weight:600;">${a.amount >= 0 ? '+' : ''}${a.amount.toFixed(3)}</td></tr>`
+    ).join('')
+
+    const programRows = programs.map(p => {
+      const filteredOpts = (p.rateOptions || []).filter(opt => {
+        const price = 100 - safeNumber(opt.points)
+        return price >= 99.0 && price <= 101.0
+      })
+      if (filteredOpts.length === 0) return ''
+      const optRows = filteredOpts.map(opt => {
+        const price = 100 - safeNumber(opt.points)
+        const adjs = opt.adjustments || []
+        const totalAdj = adjs.reduce((s, a) => s + (a.amount || 0), 0)
+        return `<tr>
+          <td style="padding:6px 8px;border-bottom:1px solid #e5e7eb;font-size:11px;">${opt.description || p.programName}</td>
+          <td style="padding:6px 8px;border-bottom:1px solid #e5e7eb;font-size:11px;text-align:right;font-weight:600;">${safeNumber(opt.rate).toFixed(3)}%</td>
+          <td style="padding:6px 8px;border-bottom:1px solid #e5e7eb;font-size:11px;text-align:right;">${price.toFixed(3)}</td>
+          <td style="padding:6px 8px;border-bottom:1px solid #e5e7eb;font-size:11px;text-align:right;">${safeNumber(opt.points).toFixed(3)}</td>
+          <td style="padding:6px 8px;border-bottom:1px solid #e5e7eb;font-size:11px;text-align:right;">$${safeNumber(opt.payment).toLocaleString()}</td>
+          <td style="padding:6px 8px;border-bottom:1px solid #e5e7eb;font-size:11px;text-align:right;color:${totalAdj >= 0 ? '#16a34a' : '#dc2626'};">${totalAdj >= 0 ? '+' : ''}${totalAdj.toFixed(3)}</td>
+        </tr>`
+      }).join('')
+
+      // Adjustment detail for this program
+      const firstOpt = filteredOpts[0]
+      const adjTable = firstOpt?.adjustments?.length ? `
+        <table style="width:100%;border-collapse:collapse;margin-top:4px;margin-bottom:12px;">
+          <thead><tr style="background:#f9fafb;">
+            <th style="padding:4px 8px;text-align:left;font-size:10px;color:#6b7280;font-weight:600;">Adjustment</th>
+            <th style="padding:4px 8px;text-align:right;font-size:10px;color:#6b7280;font-weight:600;">Points</th>
+          </tr></thead>
+          <tbody>${buildAdjRows(firstOpt.adjustments!)}</tbody>
+        </table>` : ''
+
+      return `
+        <div style="margin-bottom:16px;">
+          <h3 style="font-size:13px;font-weight:700;color:#1f2937;margin:0 0 6px 0;">${p.programName} - ${p.investorName || p.investor || ''}</h3>
+          <table style="width:100%;border-collapse:collapse;">
+            <thead><tr style="background:#f3f4f6;">
+              <th style="padding:6px 8px;text-align:left;font-size:10px;color:#6b7280;font-weight:600;">Program</th>
+              <th style="padding:6px 8px;text-align:right;font-size:10px;color:#6b7280;font-weight:600;">Rate</th>
+              <th style="padding:6px 8px;text-align:right;font-size:10px;color:#6b7280;font-weight:600;">Price</th>
+              <th style="padding:6px 8px;text-align:right;font-size:10px;color:#6b7280;font-weight:600;">Points</th>
+              <th style="padding:6px 8px;text-align:right;font-size:10px;color:#6b7280;font-weight:600;">Payment</th>
+              <th style="padding:6px 8px;text-align:right;font-size:10px;color:#6b7280;font-weight:600;">LLPA</th>
+            </tr></thead>
+            <tbody>${optRows}</tbody>
+          </table>
+          ${adjTable}
+        </div>`
+    }).filter(Boolean).join('')
+
+    const html = `<!DOCTYPE html><html><head><meta charset="utf-8"><title>Pricing - OpenBroker AI</title>
+    <style>@page{size:letter;margin:0.5in;}body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;margin:0;padding:0.5in;color:#1f2937;font-size:12px;}</style>
+    </head><body>
+      <div style="display:flex;justify-content:space-between;align-items:center;border-bottom:2px solid #2563eb;padding-bottom:12px;margin-bottom:16px;">
+        <div><span style="font-size:20px;font-weight:700;color:#111827;">OpenBroker</span><span style="background:#111827;color:#fff;font-size:10px;font-weight:700;padding:2px 5px;border-radius:3px;margin-left:6px;">AI</span></div>
+        <div style="text-align:right;font-size:10px;color:#6b7280;">${dateStr} at ${timeStr}<br/>Live Pricing</div>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:12px;margin-bottom:16px;">
+        <div style="background:#f0f9ff;padding:10px;border-radius:6px;"><div style="font-size:10px;color:#6b7280;">Loan Amount</div><div style="font-size:16px;font-weight:700;">$${Number(formData.loanAmount.replace(/,/g, '')).toLocaleString()}</div></div>
+        <div style="background:#f0f9ff;padding:10px;border-radius:6px;"><div style="font-size:10px;color:#6b7280;">${showSalesPriceField ? 'Sales Price' : 'Property Value'}</div><div style="font-size:16px;font-weight:700;">$${Number(formData.propertyValue.replace(/,/g, '')).toLocaleString()}</div></div>
+        <div style="background:#f0f9ff;padding:10px;border-radius:6px;"><div style="font-size:10px;color:#6b7280;">LTV</div><div style="font-size:16px;font-weight:700;">${formData.ltv}%</div></div>
+        <div style="background:#f0f9ff;padding:10px;border-radius:6px;"><div style="font-size:10px;color:#6b7280;">Credit Score</div><div style="font-size:16px;font-weight:700;">${formData.creditScore}</div></div>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:12px;margin-bottom:20px;font-size:11px;">
+        <div><span style="color:#6b7280;">Purpose:</span> ${formData.loanPurpose}</div>
+        <div><span style="color:#6b7280;">Occupancy:</span> ${formData.occupancyType}</div>
+        <div><span style="color:#6b7280;">Property:</span> ${formData.propertyType}</div>
+        <div><span style="color:#6b7280;">Doc Type:</span> ${formData.documentationType}</div>
+      </div>
+      ${programRows}
+      <div style="margin-top:24px;padding-top:12px;border-top:1px solid #e5e7eb;font-size:9px;color:#9ca3af;text-align:center;">
+        Generated by OpenBroker AI | Rates subject to change without notice | ${dateStr}
+      </div>
+    </body></html>`
+
+    const printWindow = window.open('', '_blank')
+    if (printWindow) {
+      printWindow.document.write(html)
+      printWindow.document.close()
+      setTimeout(() => { printWindow.print() }, 500)
+    }
   }
 
   const hasError = (field: keyof LoanData) => !!validationErrors[field]
@@ -641,6 +758,9 @@ export default function App() {
               <a href="https://app.defywholesale.com" target="_blank" rel="noopener noreferrer" className="text-sm font-medium text-gray-600 hover:text-gray-900">Pipeline</a>
               <a href="https://app.defywholesale.com" target="_blank" rel="noopener noreferrer" className="text-sm font-medium text-gray-600 hover:text-gray-900">AVM</a>
               <a href="https://app.defywholesale.com" target="_blank" rel="noopener noreferrer" className="text-sm font-medium text-gray-600 hover:text-gray-900">AUS</a>
+              <a href="mailto:torlando@defycapgroup.com,service@defytpo.com?subject=Lock%20Desk%20Request" className="inline-flex items-center gap-1.5 text-sm font-medium text-primary hover:text-primary/80">
+                <Mail className="w-4 h-4" />Contact Lock Desk
+              </a>
               <Button variant="outline" size="sm">Sign Out</Button>
             </nav>
             {/* Mobile hamburger */}
@@ -662,6 +782,9 @@ export default function App() {
               <a href="https://app.defywholesale.com" target="_blank" rel="noopener noreferrer" className="block px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 rounded-md" onClick={() => setMobileMenuOpen(false)}>Pipeline</a>
               <a href="https://app.defywholesale.com" target="_blank" rel="noopener noreferrer" className="block px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 rounded-md" onClick={() => setMobileMenuOpen(false)}>AVM</a>
               <a href="https://app.defywholesale.com" target="_blank" rel="noopener noreferrer" className="block px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 rounded-md" onClick={() => setMobileMenuOpen(false)}>AUS</a>
+              <a href="mailto:torlando@defycapgroup.com,service@defytpo.com?subject=Lock%20Desk%20Request" className="flex items-center gap-1.5 px-3 py-2 text-sm font-medium text-primary hover:bg-blue-50 rounded-md" onClick={() => setMobileMenuOpen(false)}>
+                <Mail className="w-4 h-4" />Contact Lock Desk
+              </a>
               <div className="border-t pt-2 mt-2">
                 <Button variant="outline" size="sm" className="w-full" onClick={() => setMobileMenuOpen(false)}>Sign Out</Button>
               </div>
@@ -736,10 +859,22 @@ export default function App() {
                       </div>
                     </div>
 
-                    {/* LINE 2: Appraised Value/Sales Price, Loan Amount, LTV, CLTV (2nd/HELOC only), Amortization */}
-                    <div className={`grid grid-cols-1 sm:grid-cols-2 ${formData.lienPosition !== '1st' ? 'md:grid-cols-5' : 'md:grid-cols-4'} gap-4 mt-4`}>
+                    {/* LINE 2: Sales Price (purchase only), Appraised Value, Loan Amount, LTV, CLTV (2nd/HELOC only), Amortization */}
+                    <div className={`grid grid-cols-1 sm:grid-cols-2 ${showSalesPriceField ? (formData.lienPosition !== '1st' ? 'md:grid-cols-6' : 'md:grid-cols-5') : (formData.lienPosition !== '1st' ? 'md:grid-cols-5' : 'md:grid-cols-4')} gap-4 mt-4`}>
+                      {showSalesPriceField && (
+                        <div className="space-y-2">
+                          <Label htmlFor="salesPrice">Sales Price *</Label>
+                          <Input
+                            id="salesPrice"
+                            name="salesPrice"
+                            value={formData.salesPrice}
+                            onChange={(e) => handleInputChange('salesPrice', formatNumberInput(e.target.value))}
+                            icon={<DollarSign className="w-4 h-4" />}
+                          />
+                        </div>
+                      )}
                       <div className="space-y-2">
-                        <Label htmlFor="propertyValue" className={hasError('propertyValue') ? 'text-red-600' : ''}>Value/Sales Price *</Label>
+                        <Label htmlFor="propertyValue" className={hasError('propertyValue') ? 'text-red-600' : ''}>Appraised Value *</Label>
                         <Input
                           id="propertyValue"
                           name="propertyValue"
@@ -1242,6 +1377,9 @@ export default function App() {
                             <AlertCircle className="w-3 h-3" />API Error
                           </div>
                         )}
+                        <Button variant="outline" size="sm" onClick={handleSharePDF} className="flex items-center gap-1.5 text-xs">
+                          <Download className="w-3 h-3" />Share PDF
+                        </Button>
                       </div>
                     </div>
                   </CardHeader>
