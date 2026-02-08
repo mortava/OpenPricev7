@@ -98,6 +98,9 @@ interface RateOption {
 
 interface Program {
   name: string
+  programName?: string
+  investorName?: string
+  investor?: string
   status?: string
   term?: number
   due?: number
